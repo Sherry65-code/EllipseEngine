@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -26,7 +27,11 @@ public:
 
 private:
 	ECreateInfo g_createInfo;
+	VkInstance g_instance;
 
 	void eMainLoop();
 	void eCleanup();
+	void eInitVulkan();
+
+	void eCreateInstance();
 };

@@ -25,6 +25,8 @@ endif()
 add_library(Engine STATIC
     src/Engine/Engine.cpp
     src/Engine/Engine.hpp
+    src/Engine/Core.cpp
+    src/Engine/Core.hpp
 )
 
 add_executable(Demo

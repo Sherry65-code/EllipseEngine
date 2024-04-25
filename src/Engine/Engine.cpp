@@ -37,6 +37,7 @@ Eclipse::EResult Eclipse::eInitEngine(ECreateInfo createInfo) {
 Eclipse::EResult Eclipse::eRun() {
 
 	// All Run Commands
+	eInitVulkan();
 	eMainLoop();
 	eCleanup();
 
@@ -50,10 +51,43 @@ void Eclipse::eMainLoop() {
 }
 
 void Eclipse::eCleanup() {
+	vkDestroyInstance(g_instance, nullptr);
+
+	glfwDestroyWindow(g_createInfo.pWindow);
+
 	glfwTerminate();
 }
 
 void Eclipse::eThrowError(std::string error) {
 	std::cout << "ERROR: " << error << "\n";
 	exit(EXIT_FAILURE);
+}
+
+void Eclipse::eInitVulkan() {
+	eCreateInstance();
+}
+
+void Eclipse::eCreateInstance() {
+	VkApplicationInfo appInfo{};
+	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	appInfo.pApplicationName = g_createInfo.title.c_str();
+	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+	appInfo.pEngineName = "Eclipse Engine";
+	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+	appInfo.apiVersion = VK_API_VERSION_1_3;
+
+	VkInstanceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	createInfo.pApplicationInfo = &appInfo;
+
+	uint32_t glfwExtensionCount = 0;
+	const char** glfwExtensions;
+	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	
+	createInfo.enabledExtensionCount = glfwExtensionCount;
+	createInfo.ppEnabledExtensionNames = glfwExtensions;
+	createInfo.enabledLayerCount = 0;
+
+	if (vkCreateInstance(&createInfo, nullptr, &g_instance) != VK_SUCCESS)
+		eThrowError("ENGINE: Could Not Create Instance!");
 }
