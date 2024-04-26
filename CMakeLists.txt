@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.0.0)
 
 project(EclipseEngine)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(BUILD_SHARED_LIBS OFF)
 
 find_package(Vulkan REQUIRED)
@@ -23,14 +21,14 @@ link_libraries(glfw3)
 endif()
 
 add_library(Engine STATIC
-    src/Engine/Engine.cpp
-    src/Engine/Engine.hpp
-    src/Engine/Core.cpp
-    src/Engine/Core.hpp
+    src/Engine/Engine.c
+    src/Engine/Engine.h
+    src/Engine/Core.c
+    src/Engine/Core.h
 )
 
 add_executable(Demo
-    src/Demo/Main.cpp
+    src/Demo/Main.c
 )
 
 target_link_libraries(Demo Engine)
