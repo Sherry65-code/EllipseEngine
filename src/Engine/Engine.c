@@ -6,11 +6,6 @@ void eInitEngine(EInitInfo initInfo) {
 	g_InitInfo = initInfo;
 }
 
-void eThrowError(char* error) {
-	printf("ERROR: %s\n", error);
-	exit(EXIT_FAILURE);
-}
-
 void _eInitWindow() {
 
 	// Initialize GLFW
@@ -48,7 +43,7 @@ void _eInitWindow() {
 }
 
 void _eInitVulkan() {
-	
+	_eCreateInstance();
 }
 
 void _eMainLoop() {
@@ -58,7 +53,16 @@ void _eMainLoop() {
 }
 
 void eRun() {
+	_ePassWindowPointer(g_InitInfo.pWindow);
 	_eInitWindow();
 	_eInitVulkan();
 	_eMainLoop();
+	_eCleanup();
+}
+
+void _eCleanup() {
+	_eCoreCleanup();
+
+	glfwDestroyWindow(g_InitInfo.pWindow);
+	glfwTerminate();
 }

@@ -25,6 +25,9 @@ add_library(Engine STATIC
     src/Engine/Engine.h
     src/Engine/Core.c
     src/Engine/Core.h
+    src/Engine/Error.c
+    src/Engine/Error.h
+    src/Engine/TypeDefs.h
 )
 
 add_executable(Demo

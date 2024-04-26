@@ -1,19 +1,19 @@
+#ifndef ENGINE_H
+#define ENGINE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#define nullptr NULL
-#define E_SUCCESS true
-#define E_FAILURE false
+#include "Core.h"
+#include "Error.h"
 
-typedef GLFWwindow* EWindow;
 typedef bool EResult;
 
 typedef struct EInitInfo {
-	EWindow pWindow;
+	GLFWwindow* pWindow;
 	uint32_t width;
 	uint32_t height;
 	char* title;
@@ -22,9 +22,11 @@ typedef struct EInitInfo {
 } EInitInfo;
 
 void eInitEngine(EInitInfo initInfo);
-void eThrowError(char* error);
 void eRun();
 
 void _eInitWindow();
 void _eInitVulkan();
 void _eMainLoop();
+void _eCleanup();
+
+#endif
