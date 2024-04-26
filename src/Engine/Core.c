@@ -32,7 +32,24 @@ void _eCreateInstance() {
 
 	if (vkCreateInstance(&createInfo, nullptr, &g_Instance) != VK_SUCCESS)
 		eThrowError("Could Not Create Vulkan Instance!");
-		
+
+	// TEMPORARY CODE
+
+	uint32_t extensionCount = 0;
+	vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, NULL);
+
+	VkExtensionProperties* extensions = (VkExtensionProperties*)malloc(extensionCount * sizeof(VkExtensionProperties));
+
+	vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, extensions);
+
+	printf("available extensions:\n");
+
+	for (uint32_t i = 0; i < extensionCount; ++i) {
+		printf("\t%s\n", extensions[i].extensionName);
+	}
+
+	free(extensions);
+	
 }
 
 void _eCoreCleanup() {
