@@ -1,6 +1,7 @@
 #include "Core.h"
 
 VkInstance g_Instance = VK_NULL_HANDLE;
+VkPhysicalDevice g_PhysicalDevice = VK_NULL_HANDLE;
 GLFWwindow* g_Window = nullptr;
 VkDebugUtilsMessengerEXT g_DebugMessenger;
 
@@ -44,7 +45,6 @@ void _eCreateInstance() {
         .pApplicationInfo = &appInfo,
         .enabledExtensionCount = glfwExtensionCount,
         .ppEnabledExtensionNames = glfwExtensions,
-        //.enabledLayerCount = (uint32_t)(sizeof(g_ValidationLayers)/sizeof(g_ValidationLayers[0]))
         .enabledLayerCount = 0
     };
     
@@ -75,6 +75,52 @@ void _eCreateInstance() {
         eThrowError("Could not create Vulkan instance!");
 
     free(extensions);
+}
+
+void _ePickPhysicalDevice() {
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(g_Instance, &deviceCount, nullptr);
+
+    if (deviceCount == 0)
+        eThrowError("Failed to find Vulkan Compatible GPU!");
+
+    VkPhysicalDevice* devices = (VkPhysicalDevice*)malloc(deviceCount * sizeof(VkPhysicalDevice));
+    vkEnumeratePhysicalDevices(g_Instance, &deviceCount, devices);
+
+    int max = 0;
+    int index = 0;
+
+    for (int i = 0; i < deviceCount; i++) {
+        if (max < _eRateDeviceSuitability(devices[i])) {
+            max = _eRateDeviceSuitability(devices[i]);
+            index = i;
+        }
+    }
+
+    g_PhysicalDevice = devices[index];
+
+    if (g_PhysicalDevice == VK_NULL_HANDLE || max == 0)
+        eThrowError("Failed to find GPU capable of running this engine!");
+
+    free(devices);
+}
+
+uint32_t _eRateDeviceSuitability(VkPhysicalDevice device) {
+    VkPhysicalDeviceProperties deviceProperties;
+    vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+    VkPhysicalDeviceFeatures deviceFeatures;
+    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+    int score = 0;
+    if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) score += 1000;
+    score += deviceProperties.limits.maxImageDimension2D;
+
+    printf("Score for GPU %s is %d\n", deviceProperties.deviceName, score);
+
+    if (!deviceFeatures.geometryShader) return 0;
+
+    return score;
 }
 
 bool _eCheckValidationLayerSupport() {

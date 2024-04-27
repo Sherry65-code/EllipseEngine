@@ -45,6 +45,7 @@ void _eInitWindow() {
 void _eInitVulkan() {
 	_eCreateInstance();
 	_eSetupDebugMessenger();
+	_ePickPhysicalDevice();
 }
 
 void _eMainLoop() {

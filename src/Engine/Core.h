@@ -15,11 +15,15 @@
 void _ePassWindowPointer(GLFWwindow* window);
 
 void _eCreateInstance();
+void _ePickPhysicalDevice();
+
 bool _eCheckValidationLayerSupport();
 const char** _eGetRequiredExtensions();
 void _eSetupDebugMessenger();
 VkResult _eCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 void _eDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+uint32_t _eRateDeviceSuitability(VkPhysicalDevice device);
+
 void _eCoreCleanup();
 
 #endif
