@@ -44,6 +44,7 @@ void _eInitWindow() {
 
 void _eInitVulkan() {
 	_eCreateInstance();
+	_eSetupDebugMessenger();
 }
 
 void _eMainLoop() {
