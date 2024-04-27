@@ -16,9 +16,9 @@ void _ePassWindowPointer(GLFWwindow* window);
 
 void _eCreateInstance();
 void _ePickPhysicalDevice();
+void _eCreateLogicalDevice();
 
-bool _eIsDeviceSuitable(VkPhysicalDevice device);
-uint32_t _eFindQueueFamilies(VkPhysicalDevice device);
+void _eFindQueueFamilies();
 bool _eCheckValidationLayerSupport();
 const char** _eGetRequiredExtensions();
 void _eSetupDebugMessenger();

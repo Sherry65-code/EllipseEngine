@@ -46,6 +46,8 @@ void _eInitVulkan() {
 	_eCreateInstance();
 	_eSetupDebugMessenger();
 	_ePickPhysicalDevice();
+	_eFindQueueFamilies();
+	_eCreateLogicalDevice();
 }
 
 void _eMainLoop() {
