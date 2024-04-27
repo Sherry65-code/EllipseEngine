@@ -45,8 +45,8 @@ void _eInitWindow() {
 void _eInitVulkan() {
 	_eCreateInstance();
 	_eSetupDebugMessenger();
+	_eCreateSurface();
 	_ePickPhysicalDevice();
-	_eFindQueueFamilies();
 	_eCreateLogicalDevice();
 }
 
@@ -57,8 +57,8 @@ void _eMainLoop() {
 }
 
 void eRun() {
-	_ePassWindowPointer(g_InitInfo.pWindow);
 	_eInitWindow();
+	_ePassWindowPointer(g_InitInfo.pWindow);
 	_eInitVulkan();
 	_eMainLoop();
 	_eCleanup();

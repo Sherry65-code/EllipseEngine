@@ -4,8 +4,8 @@ VkInstance g_Instance = VK_NULL_HANDLE;
 VkPhysicalDevice g_PhysicalDevice = VK_NULL_HANDLE;
 VkDevice g_Device = VK_NULL_HANDLE;
 VkQueue g_GraphicsQueue = VK_NULL_HANDLE;
-
-uint32_t g_GraphicsFamily = VK_NULL_HANDLE;
+VkQueue g_PresentQueue = VK_NULL_HANDLE;
+VkSurfaceKHR g_Surface = VK_NULL_HANDLE;
 
 GLFWwindow* g_Window = nullptr;
 VkDebugUtilsMessengerEXT g_DebugMessenger;
@@ -82,6 +82,11 @@ void _eCreateInstance() {
     free(extensions);
 }
 
+void _eCreateSurface() {
+    if (glfwCreateWindowSurface(g_Instance, g_Window, nullptr, &g_Surface) != VK_SUCCESS)
+        eThrowError("Failed to create window surface!");
+}
+
 void _ePickPhysicalDevice() {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(g_Instance, &deviceCount, nullptr);
@@ -111,23 +116,32 @@ void _ePickPhysicalDevice() {
 }
 
 void _eCreateLogicalDevice() {
-    VkDeviceQueueCreateInfo queueCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueFamilyIndex = g_GraphicsFamily,
-        .queueCount = 1
-    };
+    EQueueFamilyIndices indices = _eFindQueueFamilies(g_PhysicalDevice);
+
+    VkDeviceQueueCreateInfo* queueCreateInfos = (VkDeviceQueueCreateInfo*)malloc(sizeof(VkDeviceQueueCreateInfo) * 2);
+    uint32_t uniqueQueueFamilies[] = {indices.graphicsFamily, indices.presentFamily};
 
     float queuePriority = 1.0f;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
+    for (uint32_t i = 0; i < 2; i++) {
+        uint32_t queueFamily = uniqueQueueFamilies[i];
 
-    VkPhysicalDeviceFeatures deviceFeatures = {
-        .multiViewport = false
-    };
+        VkDeviceQueueCreateInfo queueCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = queueFamily,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority
+        };
+
+        queueCreateInfos[i] = queueCreateInfo;
+    }
+
+
+    VkPhysicalDeviceFeatures deviceFeatures = { 0 };
 
     VkDeviceCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pQueueCreateInfos = &queueCreateInfo,
-        .queueCreateInfoCount = 1,
+        .pQueueCreateInfos = queueCreateInfos,
+        .queueCreateInfoCount = (uint32_t)(2),
         .pEnabledFeatures = &deviceFeatures,
         .enabledExtensionCount = 0
     };
@@ -143,30 +157,40 @@ void _eCreateLogicalDevice() {
     if (vkCreateDevice(g_PhysicalDevice, &createInfo, nullptr, &g_Device) != VK_SUCCESS)
         eThrowError("Failed to create Logical Device!");
 
-    vkGetDeviceQueue(g_Device, g_GraphicsFamily, 0, &g_GraphicsQueue);
+    vkGetDeviceQueue(g_Device, indices.graphicsFamily, 0, &g_GraphicsQueue);
+    vkGetDeviceQueue(g_Device, indices.presentFamily, 0, &g_PresentQueue);
+
+    free(queueCreateInfos);
 }
 
-void _eFindQueueFamilies() {
-    uint32_t graphicsFamily = UINT32_MAX;
+EQueueFamilyIndices _eFindQueueFamilies(VkPhysicalDevice device) {
+    EQueueFamilyIndices indices;
 
     uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(g_PhysicalDevice, &queueFamilyCount, NULL);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, NULL);
 
     VkQueueFamilyProperties* queueFamilies = (VkQueueFamilyProperties*)malloc(sizeof(VkQueueFamilyProperties) * queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(g_PhysicalDevice, &queueFamilyCount, queueFamilies);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
 
     for (uint32_t i = 0; i < queueFamilyCount; i++) {
         VkQueueFamilyProperties queueFamily = queueFamilies[i];
 
         if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            graphicsFamily = i;
-            break;
+            indices.graphicsFamily = i;
         }
+
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, g_Surface, &presentSupport);
+
+        if (presentSupport)
+            indices.presentFamily = i;
+        if (indices.graphicsFamily != nullptr && indices.presentFamily != nullptr)
+            break;
     }
 
     free(queueFamilies);
 
-    g_GraphicsFamily = graphicsFamily;
+    return indices;
 }
 
 uint32_t _eRateDeviceSuitability(VkPhysicalDevice device) {
@@ -267,5 +291,6 @@ void _eCoreCleanup() {
     if (g_EnableValidationLayers)
         _eDestroyDebugUtilsMessengerEXT(g_Instance, g_DebugMessenger, nullptr);
 
+    vkDestroySurfaceKHR(g_Instance, g_Surface, nullptr);
     vkDestroyInstance(g_Instance, nullptr);
 }
