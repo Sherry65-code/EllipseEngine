@@ -5,6 +5,10 @@ VkPhysicalDevice g_PhysicalDevice = VK_NULL_HANDLE;
 GLFWwindow* g_Window = nullptr;
 VkDebugUtilsMessengerEXT g_DebugMessenger;
 
+struct g_QueueFamilyIndices {
+    uint32_t graphicsFamily;
+};
+
 const char* g_ValidationLayers[] = { "VK_LAYER_KHRONOS_validation" };
 
 #ifdef NDEBUG
@@ -103,6 +107,34 @@ void _ePickPhysicalDevice() {
         eThrowError("Failed to find GPU capable of running this engine!");
 
     free(devices);
+}
+
+uint32_t _eFindQueueFamilies(VkPhysicalDevice device) {
+    struct g_QueueFamilyIndices indices;
+
+    indices.graphicsFamily = nullptr;
+
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, NULL);
+
+    VkQueueFamilyProperties* queueFamilies = (VkQueueFamilyProperties*)malloc(sizeof(VkQueueFamilyProperties) * queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
+
+    for (uint32_t i = 0; i < queueFamilyCount; i++) {
+        VkQueueFamilyProperties queueFamily = queueFamilies[i];
+
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            indices.graphicsFamily = i;
+            break;
+        }
+    }
+
+    if (indices.graphicsFamily == nullptr)
+        eThrowError("Failed to Find a suitable Graphics Family Queue!");
+
+    free(queueFamilies);
+
+    return indices.graphicsFamily;
 }
 
 uint32_t _eRateDeviceSuitability(VkPhysicalDevice device) {
