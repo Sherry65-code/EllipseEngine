@@ -31,6 +31,7 @@ const char** _eGetRequiredExtensions();
 VkResult _eCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 void _eDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 uint32_t _eRateDeviceSuitability(VkPhysicalDevice device);
+bool _eCheckDeviceExtensionSupport(VkPhysicalDevice device);
 
 void _eCoreCleanup();
 

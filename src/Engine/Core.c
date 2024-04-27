@@ -11,6 +11,7 @@ GLFWwindow* g_Window = nullptr;
 VkDebugUtilsMessengerEXT g_DebugMessenger;
 
 const char* g_ValidationLayers[] = { "VK_LAYER_KHRONOS_validation" };
+const char* g_DeviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 #ifdef NDEBUG
 const bool g_EnableValidationLayers = false;
@@ -108,9 +109,15 @@ void _ePickPhysicalDevice() {
     }
 
     g_PhysicalDevice = devices[index];
+        
+    VkPhysicalDeviceProperties deviceProperties;
+    vkGetPhysicalDeviceProperties(g_PhysicalDevice, &deviceProperties);
+
+    printf("GPU Selected = %s\n", deviceProperties.deviceName);
+    printf("GPU Score = %d\n", _eRateDeviceSuitability(g_PhysicalDevice));
 
     if (g_PhysicalDevice == VK_NULL_HANDLE || max == 0)
-        eThrowError("Failed to find GPU capable of running this engine!");
+        eThrowError("Your GPU doesnt support features required by this engine!");
 
     free(devices);
 }
@@ -119,7 +126,7 @@ void _eCreateLogicalDevice() {
     EQueueFamilyIndices indices = _eFindQueueFamilies(g_PhysicalDevice);
 
     VkDeviceQueueCreateInfo* queueCreateInfos = (VkDeviceQueueCreateInfo*)malloc(sizeof(VkDeviceQueueCreateInfo) * 2);
-    uint32_t uniqueQueueFamilies[] = {indices.graphicsFamily, indices.presentFamily};
+    uint32_t uniqueQueueFamilies[2] = { indices.graphicsFamily, indices.presentFamily };
 
     float queuePriority = 1.0f;
     for (uint32_t i = 0; i < 2; i++) {
@@ -136,12 +143,12 @@ void _eCreateLogicalDevice() {
     }
 
 
-    VkPhysicalDeviceFeatures deviceFeatures = { 0 };
+    VkPhysicalDeviceFeatures deviceFeatures = { VK_NULL_HANDLE };
 
     VkDeviceCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pQueueCreateInfos = queueCreateInfos,
-        .queueCreateInfoCount = (uint32_t)(2),
+        .queueCreateInfoCount = 1,
         .pEnabledFeatures = &deviceFeatures,
         .enabledExtensionCount = 0
     };
@@ -164,10 +171,10 @@ void _eCreateLogicalDevice() {
 }
 
 EQueueFamilyIndices _eFindQueueFamilies(VkPhysicalDevice device) {
-    EQueueFamilyIndices indices;
+    EQueueFamilyIndices indices = { UINT32_MAX, UINT32_MAX };
 
     uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, NULL);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
     VkQueueFamilyProperties* queueFamilies = (VkQueueFamilyProperties*)malloc(sizeof(VkQueueFamilyProperties) * queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
@@ -184,13 +191,17 @@ EQueueFamilyIndices _eFindQueueFamilies(VkPhysicalDevice device) {
 
         if (presentSupport)
             indices.presentFamily = i;
-        if (indices.graphicsFamily != nullptr && indices.presentFamily != nullptr)
+        if (indices.graphicsFamily != UINT32_MAX && indices.presentFamily != UINT32_MAX)
             break;
     }
 
     free(queueFamilies);
 
     return indices;
+}
+
+bool _eCheckDeviceExtensionSupport(VkPhysicalDevice device) {
+    return true;
 }
 
 uint32_t _eRateDeviceSuitability(VkPhysicalDevice device) {
@@ -200,13 +211,18 @@ uint32_t _eRateDeviceSuitability(VkPhysicalDevice device) {
     VkPhysicalDeviceFeatures deviceFeatures;
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
+    EQueueFamilyIndices indices = _eFindQueueFamilies(device);
+
     int score = 0;
-    if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) score += 1000;
+
+    if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+        score += 1000;
+    
     score += deviceProperties.limits.maxImageDimension2D;
 
-    printf("Score for GPU %s is %d\n", deviceProperties.deviceName, score);
-
     if (!deviceFeatures.geometryShader) return 0;
+    if (!_eCheckDeviceExtensionSupport(device)) return 0;
+    if (indices.graphicsFamily == UINT32_MAX || indices.presentFamily == UINT32_MAX) return 0;
 
     return score;
 }
