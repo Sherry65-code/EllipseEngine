@@ -1,11 +1,16 @@
 #include "Core.h"
 
+VkImage* g_SwapChainImages = VK_NULL_HANDLE;
+
 VkInstance g_Instance = VK_NULL_HANDLE;
 VkPhysicalDevice g_PhysicalDevice = VK_NULL_HANDLE;
 VkDevice g_Device = VK_NULL_HANDLE;
 VkQueue g_GraphicsQueue = VK_NULL_HANDLE;
 VkQueue g_PresentQueue = VK_NULL_HANDLE;
 VkSurfaceKHR g_Surface = VK_NULL_HANDLE;
+VkSwapchainKHR g_SwapChain = VK_NULL_HANDLE;
+VkFormat g_SwapChainImageFormat = (VkFormat)0;
+VkExtent2D g_SwapChainExtent = { 0 };
 
 GLFWwindow* g_Window = nullptr;
 VkDebugUtilsMessengerEXT g_DebugMessenger;
@@ -150,7 +155,8 @@ void _eCreateLogicalDevice() {
         .pQueueCreateInfos = queueCreateInfos,
         .queueCreateInfoCount = 1,
         .pEnabledFeatures = &deviceFeatures,
-        .enabledExtensionCount = 0
+        .enabledExtensionCount = (sizeof(g_DeviceExtensions) / sizeof(g_DeviceExtensions[0])),
+        .ppEnabledExtensionNames = g_DeviceExtensions
     };
 
     if (g_EnableValidationLayers) {
@@ -168,6 +174,85 @@ void _eCreateLogicalDevice() {
     vkGetDeviceQueue(g_Device, indices.presentFamily, 0, &g_PresentQueue);
 
     free(queueCreateInfos);
+}
+
+void _eCreateSwapChain() {
+    ESwapChainSupportDetails swapChainSupport = _eQuerySwapChainSupport(g_PhysicalDevice);
+
+    VkSurfaceFormatKHR surfaceFormat = _eChooseSwapSurfaceFormat(swapChainSupport.formats);
+    VkPresentModeKHR presentMode = _eChooseSwapPresentMode(&swapChainSupport.presentModes);
+    VkExtent2D extent = _eChooseSwapExtent(swapChainSupport.capabilites);
+
+    uint32_t imageCount = _eClamp(swapChainSupport.capabilites.minImageCount + 1, swapChainSupport.capabilites.minImageCount, swapChainSupport.capabilites.maxImageCount);
+    
+    VkSwapchainCreateInfoKHR createInfo = {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .surface = g_Surface,
+        .minImageCount = imageCount,
+        .imageFormat = surfaceFormat.format,
+        .imageColorSpace = surfaceFormat.colorSpace,
+        .imageExtent = extent,
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+    };
+
+    EQueueFamilyIndices indices = _eFindQueueFamilies(g_PhysicalDevice);
+    uint32_t queueFamilyIndices[] = { indices.graphicsFamily, indices.presentFamily };
+
+    if (indices.graphicsFamily != indices.presentFamily) {
+        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        createInfo.queueFamilyIndexCount = 2;
+        createInfo.pQueueFamilyIndices = queueFamilyIndices;
+    }
+    else {
+        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        createInfo.queueFamilyIndexCount = 0;
+        createInfo.pQueueFamilyIndices = nullptr;
+    }
+
+    createInfo.preTransform = swapChainSupport.capabilites.currentTransform;
+    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.presentMode = presentMode;
+    createInfo.clipped = VK_TRUE;
+    createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    if (vkCreateSwapchainKHR(g_Device, &createInfo, nullptr, &g_SwapChain) != VK_SUCCESS)
+        eThrowError("Failed to create Swap Chain!");
+
+    vkGetSwapchainImagesKHR(g_Device, g_SwapChain, &imageCount, nullptr);
+    g_SwapChainImages = (VkImage*)malloc(sizeof(VkImage) * imageCount);
+    vkGetSwapchainImagesKHR(g_Device, g_SwapChain, &imageCount, g_SwapChainImages);
+    
+    g_SwapChainImageFormat = surfaceFormat.format;
+    g_SwapChainExtent = extent;
+}
+
+ESwapChainSupportDetails _eQuerySwapChainSupport(VkPhysicalDevice device) {
+    ESwapChainSupportDetails* details = (ESwapChainSupportDetails*)malloc(sizeof(ESwapChainSupportDetails));
+    
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, g_Surface, &details->capabilites);
+
+    uint32_t formatCount = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_Surface, &formatCount, nullptr);
+
+    if (formatCount != 0) {
+        details->formats = (VkSurfaceFormatKHR*)malloc(sizeof(VkSurfaceFormatKHR) * formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_Surface, &formatCount, details->formats);
+    }
+
+    uint32_t presentModeCount;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_Surface, &presentModeCount, nullptr);
+
+    if (presentModeCount != 0) {
+        details->presentModes = (VkPresentModeKHR*)malloc(sizeof(VkPresentModeKHR) * presentModeCount);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_Surface, &presentModeCount, &details->presentModes);
+    }
+
+    ESwapChainSupportDetails return_value = *(details);
+
+    free(details);
+
+    return return_value;
 }
 
 EQueueFamilyIndices _eFindQueueFamilies(VkPhysicalDevice device) {
@@ -200,7 +285,68 @@ EQueueFamilyIndices _eFindQueueFamilies(VkPhysicalDevice device) {
     return indices;
 }
 
+VkSurfaceFormatKHR _eChooseSwapSurfaceFormat(VkSurfaceFormatKHR* availableFormats) {
+    for (uint32_t i = 0; i < (sizeof(availableFormats) / sizeof(availableFormats[0])); i++) {
+        VkSurfaceFormatKHR availableFormat = availableFormats[i];
+        if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            return availableFormat;
+    }
+    return availableFormats[0];
+}
+
+VkPresentModeKHR _eChooseSwapPresentMode(VkPresentModeKHR* availablePresentModes) {
+    
+    for (uint32_t i = 0; i < (sizeof(availablePresentModes) / sizeof(availablePresentModes[0])); i++) {
+        VkPresentModeKHR availablePresentMode = availablePresentModes[i];
+        if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+            return availablePresentMode;
+    }
+
+    return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkExtent2D _eChooseSwapExtent(VkSurfaceCapabilitiesKHR capabilites) {
+    if (capabilites.currentExtent.width != UINT32_MAX)
+        return capabilites.currentExtent;
+    else {
+        int width = 0, height = 0;
+        glfwGetFramebufferSize(g_Window, &width, &height);
+
+        VkExtent2D actualExtent = {
+            (uint32_t)width,
+            (uint32_t)height
+        };
+
+        actualExtent.width = _eClamp(actualExtent.width, capabilites.minImageExtent.width, capabilites.maxImageExtent.width);
+        actualExtent.height = _eClamp(actualExtent.height, capabilites.minImageExtent.height, capabilites.maxImageExtent.height);
+    
+        return actualExtent;
+    }
+}
+
 bool _eCheckDeviceExtensionSupport(VkPhysicalDevice device) {
+    uint32_t extensionCount;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+    VkExtensionProperties* avaiableExtensions = (VkExtensionProperties*)malloc(sizeof(VkExtensionProperties) * extensionCount);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, avaiableExtensions);
+
+    char** requiredExtensions = (char**)malloc(sizeof(char*) * (extensionCount));
+    requiredExtensions = g_DeviceExtensions;
+
+    for (int i = 0; i < (sizeof(requiredExtensions) / sizeof(requiredExtensions[0])); i++) {
+        char* extension_to_search = requiredExtensions[i];
+        bool isFound = false;
+        for (int j = 0; j < extensionCount; j++) {
+            if (strcmp(extension_to_search, avaiableExtensions[j].extensionName) == 0) {
+                isFound = true;
+                break;
+            }
+        }
+        if (!isFound)
+            return false;
+    }
+     
     return true;
 }
 
@@ -214,7 +360,7 @@ uint32_t _eRateDeviceSuitability(VkPhysicalDevice device) {
     EQueueFamilyIndices indices = _eFindQueueFamilies(device);
 
     int score = 0;
-
+    
     if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
         score += 1000;
     
@@ -223,7 +369,6 @@ uint32_t _eRateDeviceSuitability(VkPhysicalDevice device) {
     if (!deviceFeatures.geometryShader) return 0;
     if (!_eCheckDeviceExtensionSupport(device)) return 0;
     if (indices.graphicsFamily == UINT32_MAX || indices.presentFamily == UINT32_MAX) return 0;
-
     return score;
 }
 
@@ -302,6 +447,7 @@ void _eDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerE
 }
 
 void _eCoreCleanup() {
+    vkDestroySwapchainKHR(g_Device, g_SwapChain, nullptr);
     vkDestroyDevice(g_Device, nullptr);
     
     if (g_EnableValidationLayers)

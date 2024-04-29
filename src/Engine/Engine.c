@@ -48,6 +48,7 @@ void _eInitVulkan() {
 	_eCreateSurface();
 	_ePickPhysicalDevice();
 	_eCreateLogicalDevice();
+	_eCreateSwapChain();
 }
 
 void _eMainLoop() {

@@ -14,11 +14,7 @@ add_subdirectory(third_party/glfw)
 
 link_libraries(Vulkan::Vulkan)
 
-if(WIN32)
 link_libraries(glfw)
-else()
-link_libraries(glfw3)
-endif()
 
 add_library(Engine STATIC
     src/Engine/Engine.c
@@ -27,6 +23,8 @@ add_library(Engine STATIC
     src/Engine/Core.h
     src/Engine/Error.c
     src/Engine/Error.h
+    src/Engine/Maths.c
+    src/Engine/Maths.h
     src/Engine/TypeDefs.h
 )
 

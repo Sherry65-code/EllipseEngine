@@ -11,11 +11,18 @@
 
 #include "Error.h"
 #include "TypeDefs.h"
+#include "Maths.h"
 
 typedef struct EQueueFamilyIndices {
 	uint32_t graphicsFamily;
 	uint32_t presentFamily;
 } EQueueFamilyIndices;
+
+typedef struct ESwapChainSupportDetails {
+	VkSurfaceCapabilitiesKHR capabilites;
+	VkSurfaceFormatKHR* formats;
+	VkPresentModeKHR* presentModes;
+} ESwapChainSupportDetails;
 
 void _ePassWindowPointer(GLFWwindow* window);
 
@@ -24,6 +31,7 @@ void _eSetupDebugMessenger();
 void _eCreateSurface();
 void _ePickPhysicalDevice();
 void _eCreateLogicalDevice();
+void _eCreateSwapChain();
 
 EQueueFamilyIndices _eFindQueueFamilies(VkPhysicalDevice device);
 bool _eCheckValidationLayerSupport();
@@ -32,7 +40,11 @@ VkResult _eCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsM
 void _eDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 uint32_t _eRateDeviceSuitability(VkPhysicalDevice device);
 bool _eCheckDeviceExtensionSupport(VkPhysicalDevice device);
+ESwapChainSupportDetails _eQuerySwapChainSupport(VkPhysicalDevice device);
+VkSurfaceFormatKHR _eChooseSwapSurfaceFormat(VkSurfaceFormatKHR* availableFormats);
+VkPresentModeKHR _eChooseSwapPresentMode(VkPresentModeKHR* availablePresentModes);
+VkExtent2D _eChooseSwapExtent(VkSurfaceCapabilitiesKHR capabilites);
 
-void _eCoreCleanup();
+void _eCoreCleanup(); 
 
 #endif
