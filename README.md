@@ -34,7 +34,27 @@ mkdir build
 cd build
 cmake ..
 make
-make Shaders
+make Demo
+```
+
+## Linux Packages required to build this project
+
+### Debian
+
+```bash
+sudo apt install libwayland-dev libxkbcommon-dev xorg-dev
+```
+
+### Fedora/RHEL
+
+```bash
+sudo dnf install wayland-devel libxkbcommon-devel libXcursor-devel libXi-devel libXinerama-devel libXrandr-devel
+```
+
+### FreeBSD
+
+```bash
+pkg install wayland libxkbcommon evdev-proto xorgproto
 ```
 
 ## Requirements
