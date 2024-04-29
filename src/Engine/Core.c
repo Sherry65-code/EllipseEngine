@@ -455,4 +455,6 @@ void _eCoreCleanup() {
 
     vkDestroySurfaceKHR(g_Instance, g_Surface, nullptr);
     vkDestroyInstance(g_Instance, nullptr);
+
+    free(g_SwapChainImages);
 }
