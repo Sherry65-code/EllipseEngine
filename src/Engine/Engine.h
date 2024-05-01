@@ -20,9 +20,9 @@ typedef struct EInitInfo {
 void eInitEngine(EInitInfo initInfo);
 void eRun();
 
-void _eInitWindow();
-void _eInitVulkan();
-void _eMainLoop();
-void _eCleanup();
+void eInitWindow();
+void eInitVulkan();
+void eMainLoop();
+void eCleanup();
 
 #endif

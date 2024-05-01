@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5)
 
 project(EclipseEngine)
 
@@ -16,22 +16,16 @@ link_libraries(Vulkan::Vulkan)
 
 link_libraries(glfw)
 
+file(GLOB_RECURSE SRC_FILES src/Engine/*)
+
 add_library(Engine STATIC
-    src/Engine/Engine.c
-    src/Engine/Engine.h
-    src/Engine/Core.c
-    src/Engine/Core.h
-    src/Engine/Error.c
-    src/Engine/Error.h
-    src/Engine/Maths.c
-    src/Engine/Maths.h
-    src/Engine/TypeDefs.h
+    ${SRC_FILES}
 )
 
-add_executable(Demo
-    src/Demo/Main.c
+add_executable(Editor
+    src/Editor/Main.c
 )
 
-target_link_libraries(Demo Engine)
+target_link_libraries(Editor Engine)
 
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})

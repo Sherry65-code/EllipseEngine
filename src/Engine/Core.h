@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
@@ -24,27 +25,10 @@ typedef struct ESwapChainSupportDetails {
 	VkPresentModeKHR* presentModes;
 } ESwapChainSupportDetails;
 
-void _ePassWindowPointer(GLFWwindow* window);
+void ePassWindowPointer(GLFWwindow* window);
 
-void _eCreateInstance();
-void _eSetupDebugMessenger();
-void _eCreateSurface();
-void _ePickPhysicalDevice();
-void _eCreateLogicalDevice();
-void _eCreateSwapChain();
+void eCreateInstance();
 
-EQueueFamilyIndices _eFindQueueFamilies(VkPhysicalDevice device);
-bool _eCheckValidationLayerSupport();
-const char** _eGetRequiredExtensions();
-VkResult _eCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-void _eDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
-uint32_t _eRateDeviceSuitability(VkPhysicalDevice device);
-bool _eCheckDeviceExtensionSupport(VkPhysicalDevice device);
-ESwapChainSupportDetails _eQuerySwapChainSupport(VkPhysicalDevice device);
-VkSurfaceFormatKHR _eChooseSwapSurfaceFormat(VkSurfaceFormatKHR* availableFormats);
-VkPresentModeKHR _eChooseSwapPresentMode(VkPresentModeKHR* availablePresentModes);
-VkExtent2D _eChooseSwapExtent(VkSurfaceCapabilitiesKHR capabilites);
-
-void _eCoreCleanup(); 
+void eCoreCleanup(); 
 
 #endif

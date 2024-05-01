@@ -5,7 +5,7 @@ int main(int argc, char* argv[]) {
 	initInfo.pWindow = nullptr;
 	initInfo.width = 800;
 	initInfo.height = 600;
-	initInfo.title = "Eclipse Engine Demo";
+	initInfo.title = "Eclipse Engine";
 	initInfo.isFullscreen = false;
 	initInfo.isResizable = false;
 

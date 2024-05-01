@@ -1,12 +1,12 @@
 #include "Engine.h"
 
-EInitInfo g_InitInfo;
+EInitInfo gInitInfo;
 
 void eInitEngine(EInitInfo initInfo) {
-	g_InitInfo = initInfo;
+	gInitInfo = initInfo;
 }
 
-void _eInitWindow() {
+void eInitWindow() {
 
 	// Initialize GLFW
 	if (!glfwInit())
@@ -20,7 +20,7 @@ void _eInitWindow() {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 	// Check if window needs to be resizable or not
-	switch (g_InitInfo.isResizable) {
+	switch (gInitInfo.isResizable) {
 	case true:
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		break;
@@ -30,44 +30,39 @@ void _eInitWindow() {
 	};
 
 	// Create Window
-	g_InitInfo.pWindow = glfwCreateWindow(g_InitInfo.width, g_InitInfo.height, g_InitInfo.title, nullptr, nullptr);
+	gInitInfo.pWindow = glfwCreateWindow(gInitInfo.width, gInitInfo.height, gInitInfo.title, nullptr, nullptr);
 
 	// Check if window is created
-	if (!g_InitInfo.pWindow) {
+	if (!gInitInfo.pWindow) {
 		glfwTerminate();
 		eThrowError("Could not create Window!");
 	}
 
 	// set current context to this window
-	glfwMakeContextCurrent(g_InitInfo.pWindow);
+	glfwMakeContextCurrent(gInitInfo.pWindow);
 }
 
-void _eInitVulkan() {
-	_eCreateInstance();
-	_eSetupDebugMessenger();
-	_eCreateSurface();
-	_ePickPhysicalDevice();
-	_eCreateLogicalDevice();
-	_eCreateSwapChain();
+void eInitVulkan() {
+	eCreateInstance();
 }
 
-void _eMainLoop() {
-	while (!glfwWindowShouldClose(g_InitInfo.pWindow)) {
+void eMainLoop() {
+	while (!glfwWindowShouldClose(gInitInfo.pWindow)) {
 		glfwPollEvents();
 	}
 }
 
 void eRun() {
-	_eInitWindow();
-	_ePassWindowPointer(g_InitInfo.pWindow);
-	_eInitVulkan();
-	_eMainLoop();
-	_eCleanup();
+	eInitWindow();
+	ePassWindowPointer(gInitInfo.pWindow);
+	eInitVulkan();
+	eMainLoop();
+	eCleanup();
 }
 
-void _eCleanup() {
-	_eCoreCleanup();
+void eCleanup() {
+	eCoreCleanup();
 
-	glfwDestroyWindow(g_InitInfo.pWindow);
+	glfwDestroyWindow(gInitInfo.pWindow);
 	glfwTerminate();
 }
