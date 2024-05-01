@@ -28,6 +28,13 @@ typedef struct ESwapChainSupportDetails {
 void ePassWindowPointer(GLFWwindow* window);
 
 void eCreateInstance();
+void eSetupDebugMessenger();
+
+bool eCheckValidationLayerSupport();
+const char** eGetRequiredExtensions();
+uint32_t eGetRequiredExtensionCount();
+VkResult eCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 
 void eCoreCleanup(); 
 
