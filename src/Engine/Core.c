@@ -19,7 +19,10 @@ VkFormat gSwapChainImageFormat;
 VkExtent2D gSwapChainExtent = { nullptr };
 
 VkImage* gSwapChainImages = nullptr;
+uint32_t gSwapChainImagesCount = 0;
 
+VkImageView* gSwapChainImageViews = nullptr;
+uint32_t gSwapChainImageViewsCount = 0;
 
 const char* gValidationLayers[] = { "VK_LAYER_KHRONOS_validation" };
 
@@ -241,10 +244,40 @@ void eCreateSwapChain() {
 
 	vkGetSwapchainImagesKHR(gDevice, gSwapChain, &imageCount, nullptr);
 	gSwapChainImages = (VkImage*)malloc(sizeof(VkImage) * imageCount);
+	assert(gSwapChainImages != nullptr);
+	gSwapChainImagesCount = imageCount;
 	vkGetSwapchainImagesKHR(gDevice, gSwapChain, &imageCount, gSwapChainImages);
 
 	gSwapChainImageFormat = surfaceFormat.format;
 	gSwapChainExtent = extent;
+}
+
+void eCreateImageViews() {
+	gSwapChainImageViews = (VkImageView*)malloc(sizeof(VkImageView) * gSwapChainImagesCount);
+	assert(gSwapChainImageViews != nullptr);
+	gSwapChainImageViewsCount = gSwapChainImagesCount;
+
+	for (uint32_t i = 0; i < gSwapChainImagesCount; i++) {
+		VkImageViewCreateInfo createInfo = {
+			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+			.image = gSwapChainImages[i],
+			.viewType = VK_IMAGE_VIEW_TYPE_2D,
+			.format = gSwapChainImageFormat,
+			.components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+			.components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+			.components.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+			.components.a = VK_COMPONENT_SWIZZLE_IDENTITY,
+			.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+			.subresourceRange.baseMipLevel = 0,
+			.subresourceRange.levelCount = 1,
+			.subresourceRange.baseArrayLayer = 0,
+			.subresourceRange.layerCount = 1
+		};
+
+		if (vkCreateImageView(gDevice, &createInfo, nullptr, &gSwapChainImageViews[i]) != VK_SUCCESS)
+			eThrowError("Failed to create Image Views!");
+	}
+
 }
 
 uint32_t eRateDevice(VkPhysicalDevice device) {
@@ -487,6 +520,10 @@ VkExtent2D eChooseSwapExtent(VkSurfaceCapabilitiesKHR capabilites) {
 }
 
 void eCoreCleanup() {
+
+	for (uint32_t i = 0; i < gSwapChainImageViewsCount; i++)
+		vkDestroyImageView(gDevice, gSwapChainImageViews[i], nullptr);
+
 	vkDestroySwapchainKHR(gDevice, gSwapChain, nullptr);
 	vkDestroyDevice(gDevice, nullptr);
 
