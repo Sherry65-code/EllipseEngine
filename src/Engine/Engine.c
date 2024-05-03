@@ -49,6 +49,8 @@ void eInitVulkan() {
 	ePickPhysicalDevice();
 	eCreateLogicalDevice();
 	eCreateSwapChain();
+	eCreateImageViews();
+	eCreateGraphicsPipeline();
 }
 
 void eMainLoop() {

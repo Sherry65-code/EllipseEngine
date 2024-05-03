@@ -280,6 +280,10 @@ void eCreateImageViews() {
 
 }
 
+void eCreateGraphicsPipeline() {
+
+}
+
 uint32_t eRateDevice(VkPhysicalDevice device) {
 	EQueueFamilyIndices indices = eFindQueueFamilies(device);
 

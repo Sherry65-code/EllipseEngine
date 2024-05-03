@@ -36,6 +36,7 @@ void ePickPhysicalDevice();
 void eCreateLogicalDevice();
 void eCreateSwapChain();
 void eCreateImageViews();
+void eCreateGraphicsPipeline();
 
 bool eCheckValidationLayerSupport();
 const char** eGetRequiredExtensions();
