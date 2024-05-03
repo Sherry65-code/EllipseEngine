@@ -45,6 +45,10 @@ void eInitWindow() {
 void eInitVulkan() {
 	eCreateInstance();
 	eSetupDebugMessenger();
+	eCreateSurface();
+	ePickPhysicalDevice();
+	eCreateLogicalDevice();
+	eCreateSwapChain();
 }
 
 void eMainLoop() {
