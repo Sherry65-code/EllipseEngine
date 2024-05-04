@@ -18,15 +18,9 @@ link_libraries(glfw)
 
 file(GLOB_RECURSE SRC_FILES src/Engine/*)
 
-add_library(Engine STATIC
+add_executable(EclipseEngine
     ${SRC_FILES}
 )
-
-add_executable(Editor
-    src/Editor/Main.c
-)
-
-target_link_libraries(Editor Engine)
 
 file(GLOB_RECURSE SHADERS_FILES shaders/*)
 
