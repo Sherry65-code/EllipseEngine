@@ -16,7 +16,7 @@ link_libraries(Vulkan::Vulkan)
 
 link_libraries(glfw)
 
-file(GLOB_RECURSE SRC_FILES src/Engine/*)
+file(GLOB_RECURSE SRC_FILES src/*)
 
 add_executable(EclipseEngine
     ${SRC_FILES}
