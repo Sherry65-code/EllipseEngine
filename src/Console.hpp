@@ -1,8 +1,11 @@
+#pragma once
+
 #include <iostream>
 
 class Console {
 public:
-	void Info(std::string info);
-	void Error(std::string error);
-	void Warning(std::string warning);
+	static void Info(std::string info);
+	static void Error(std::string error);
+	static void Warning(std::string warning);
+	static void Debug(std::string debug);
 };

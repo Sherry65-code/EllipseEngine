@@ -12,3 +12,7 @@ void Console::Error(std::string error) {
 void Console::Warning(std::string warning) {
 	std::cout << "WARNING: " << warning << std::endl;
 }
+
+void Console::Debug(std::string debug) {
+	std::cout << "DEBUG: " << debug << std::endl;
+}

@@ -26,10 +26,6 @@ uint8_t Window::NewWindow(std::string title, uint32_t width, uint32_t height, bo
 	return 0;
 }
 
-Window::WINDOW Window::Return() const {
-	return gWindow;
-}
-
 void Window::Cleanup() {
 	if (gWindow != nullptr)
 		glfwDestroyWindow(gWindow);

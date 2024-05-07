@@ -1,3 +1,5 @@
+#pragma once
+
 // Options - VULKAN
 #define API VULKAN
 
@@ -7,7 +9,6 @@
 #endif
 
 #include "Window.hpp"
-#include "Console.hpp"
 
 class Engine {
 private:
