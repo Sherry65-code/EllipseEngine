@@ -23,7 +23,10 @@ void Engine::initVulkan() {
     core.setDebugMode(isDebug);
     core.createInstance();
     core.setupDebugMessenger();
+    core.createSurface(pWindow);
     core.pickPhysicalDevice();
+    core.createLogicalDevice();
+    
 }
 
 void Engine::mainLoop() {

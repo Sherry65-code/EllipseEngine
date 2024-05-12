@@ -1,7 +1,12 @@
 #include "VkCore.hpp"
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-    Console::PrintDebug("{}", pCallbackData->pMessage);
+    if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+        Console::PrintWarning("{}", pCallbackData->pMessage);
+    else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+        Console::PrintError("{}", pCallbackData->pMessage);
+    else
+        Console::PrintInfo("{}", pCallbackData->pMessage);
     return VK_FALSE;
 }
 
@@ -62,10 +67,16 @@ Core::QueueFamilyIndices Core::findQueueFamilies(VkPhysicalDevice device) {
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamiles.data());
 
     uint32_t i = 0;
-    for (const VkQueueFamilyProperties queueFamily : queueFamiles) {
+    for (const auto& queueFamily : queueFamiles) {
         if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             indices.graphicsFamily = i;
         }
+
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+        if (presentSupport)
+            indices.presentFamily = i;
 
         if (indices.isComplete()) break;
 
@@ -135,6 +146,11 @@ void Core::setupDebugMessenger() {
         Console::PrintError("Failed to set up debug messenger!");
 }
 
+void Core::createSurface(GLFWwindow* window) {
+    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
+        Console::PrintError("Failed to create Window Surface!");
+}
+
 void Core::pickPhysicalDevice() {
     uint32_t deviceCount;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -169,12 +185,60 @@ void Core::pickPhysicalDevice() {
     }
 }
 
+void Core::createLogicalDevice() {
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+
+    float queuePriority = 1.0f;
+    for (uint32_t queueFamily : uniqueQueueFamilies) {
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamily;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
+
+    VkPhysicalDeviceFeatures deviceFeatures{};
+
+    VkDeviceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    createInfo.pQueueCreateInfos = queueCreateInfos.data();
+
+    createInfo.pEnabledFeatures = &deviceFeatures;
+
+    createInfo.enabledExtensionCount = 0;
+
+    if (isDebug) {
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.ppEnabledLayerNames = validationLayers.data();
+    } else {
+        createInfo.enabledLayerCount = 0;
+    }
+
+    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+        Console::PrintError("Failed to create Logical Device!");
+
+    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+}
+
+
 void Core::cleanup() {
+    if (isDebug) Console::PrintInfo("Destroying logical device!");
+    vkDestroyDevice(device, nullptr);
+
     if (isDebug) {
         Console::PrintInfo("Destroying Debugger!");
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
 
+    if (isDebug) Console::PrintInfo("Destroying Surface!");
+    vkDestroySurfaceKHR(instance, surface, nullptr);
+    
     if (isDebug) Console::PrintInfo("Destroying instance!");
     vkDestroyInstance(instance, nullptr);
 }

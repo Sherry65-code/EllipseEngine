@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdint>
 #include <optional>
+#include <set>
 
 #include <vulkan/vulkan.h>
 
@@ -18,12 +19,17 @@ class Core {
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
     VkPhysicalDevice physicalDevice;
+    VkDevice device;
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
+    VkSurfaceKHR surface;
 
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
 
         bool isComplete() {
-            return graphicsFamily.has_value();
+            return graphicsFamily.has_value() && presentFamily.has_value();
         }
     };
 
@@ -40,7 +46,9 @@ class Core {
 
     void createInstance();
     void setupDebugMessenger();
+    void createSurface(GLFWwindow* window);
     void pickPhysicalDevice();
+    void createLogicalDevice();
 
     void cleanup();
 };
