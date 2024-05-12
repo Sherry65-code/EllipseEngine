@@ -29,26 +29,14 @@ file(GLOB_RECURSE SHADERS_FILES shaders/*)
 
 add_custom_target(Shaders SOURCES ${SHADERS_FILES})
 
-if (WIN32)
 foreach(Shader ${SHADERS_FILES})
-    get_filename_component(ShaderName ${Shader} NAME_WE)  # Extract shader file name without extension
+    get_filename_component(Shader_name ${Shader} NAME_WE)
     add_custom_command(
         TARGET Shaders
         PRE_BUILD
-        COMMAND ${Vulkan_INCLUDE_DIRS}/../Bin/glslc ${Shader} -o ${CMAKE_BINARY_DIR}/${ShaderName}.spv
-        COMMENT "Compiling shader ${Shader}"
+        COMMAND ${Vulkan_INCLUDE_DIRS}/../bin/glslc ${Shader} -o ${CMAKE_BINARY_DIR}/${Shader_name}.spv
+        COMMENT "Compiling shader ${Shader_name}"
     )
 endforeach()
-else()
-foreach(Shader ${SHADERS_FILES})
-    get_filename_component(ShaderName ${Shader} NAME_WE)  # Extract shader file name without extension
-    add_custom_command(
-        TARGET Shaders
-        PRE_BUILD
-        COMMAND ${CMAKE_SOURCE_DIR}/linux/glslc ${Shader} -o ${CMAKE_BINARY_DIR}/${ShaderName}.spv
-        COMMENT "Compiling shader ${Shader}"
-    )
-endforeach()
-endif()
 
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})

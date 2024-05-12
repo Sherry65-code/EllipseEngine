@@ -179,6 +179,46 @@ Core::SwapChainSupportDetails Core::querySwapChainSupport(VkPhysicalDevice devic
     return details;
 }
 
+
+bool Core::checkValidationLayerSupport() {
+    uint32_t layerCount;
+    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+    std::vector<VkLayerProperties> availableLayers(layerCount);
+    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+    for (const char* layerName : validationLayers) {
+        bool layerFound = false;
+
+        for (const auto& layerProperties : availableLayers) {
+            if (strcmp(layerName, layerProperties.layerName) == 0) {
+                layerFound = true;
+                break;
+            }
+        }
+
+        if (!layerFound)
+            return false;
+    }
+
+    return true;
+}
+
+std::vector<const char*> Core::getRequiredExtensions() {
+    uint32_t glfwExtensionCount;
+    const char** glfwExtensions;
+
+    Window::getInstanceExtensions(glfwExtensionCount, glfwExtensions);
+
+    std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+    if (isDebug)
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+    return extensions;
+}
+
+
 void Core::createInstance() {
 
     if (isDebug && !checkValidationLayerSupport())
@@ -392,6 +432,10 @@ void Core::createImageViews() {
     }
 }
 
+void Core::createGraphicsPipeline() {
+    
+}
+
 void Core::cleanup() {
     if (isDebug) Console::PrintInfo("Destroying image views!");
     for (auto imageView : swapChainImageViews) {
@@ -414,42 +458,4 @@ void Core::cleanup() {
     
     if (isDebug) Console::PrintInfo("Destroying instance!");
     vkDestroyInstance(instance, nullptr);
-}
-
-bool Core::checkValidationLayerSupport() {
-    uint32_t layerCount;
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-    std::vector<VkLayerProperties> availableLayers(layerCount);
-    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-    for (const char* layerName : validationLayers) {
-        bool layerFound = false;
-
-        for (const auto& layerProperties : availableLayers) {
-            if (strcmp(layerName, layerProperties.layerName) == 0) {
-                layerFound = true;
-                break;
-            }
-        }
-
-        if (!layerFound)
-            return false;
-    }
-
-    return true;
-}
-
-std::vector<const char*> Core::getRequiredExtensions() {
-    uint32_t glfwExtensionCount;
-    const char** glfwExtensions;
-
-    Window::getInstanceExtensions(glfwExtensionCount, glfwExtensions);
-
-    std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-    if (isDebug)
-        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-
-    return extensions;
 }

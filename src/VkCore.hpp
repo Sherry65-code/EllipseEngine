@@ -75,6 +75,7 @@ class Core {
     void createLogicalDevice();
     void createSwapChain();
     void createImageViews();
+    void createGraphicsPipeline();
 
     void cleanup();
 };

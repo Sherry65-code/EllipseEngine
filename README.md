@@ -34,7 +34,7 @@ mkdir build
 cd build
 cmake ..
 make
-make Demo
+make Shaders
 ```
 
 ## Linux Packages required to build this project

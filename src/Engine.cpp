@@ -29,6 +29,7 @@ void Engine::initVulkan() {
     core.createLogicalDevice();
     core.createSwapChain();
     core.createImageViews();
+    core.createGraphicsPipeline();
 }
 
 void Engine::mainLoop() {
