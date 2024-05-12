@@ -21,12 +21,13 @@ void Engine::initWindow() {
 
 void Engine::initVulkan() {
     core.setDebugMode(isDebug);
+    core.setWindowPointer(pWindow);
     core.createInstance();
     core.setupDebugMessenger();
-    core.createSurface(pWindow);
+    core.createSurface();
     core.pickPhysicalDevice();
     core.createLogicalDevice();
-    
+    core.createSwapChain();
 }
 
 void Engine::mainLoop() {
