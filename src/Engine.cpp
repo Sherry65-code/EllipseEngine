@@ -1,59 +1,36 @@
 #include "Engine.hpp"
 
-const std::string window_title = "Eclipse Engine Demo";
-const uint32_t window_width = 800;
-const uint32_t window_height = 600;
-const bool window_is_fullscreen = false;
-const bool window_is_resizable = false;
+bool isDebug = false;
 
-Window window;
+Core core;
 
-Window::WINDOW gWindow = nullptr;
-
-Core::Objects objects;
-
-void Engine::InitWindow() {
-	
-	uint8_t window_return_value = window.NewWindow(window_title, window_width, window_height, window_is_fullscreen, window_is_resizable);
-	
-	switch (window_return_value) {
-		case 0: Console::Info("Created Window Successfully!"); break;
-		case 1: Console::Error("Failed to initialize window!"); break;
-		case 2: Console::Error("Failed to create window!"); break;
-	}
-
-	gWindow = window.gWindow;
-
+void Engine::setDebugMode(bool debugMode) {
+    isDebug = debugMode;
 }
 
-void Engine::InitRenderer() {
-
-	Core::InstanceCreateInfo instanceCreateInfo;
-	instanceCreateInfo.applicationName = window_title;
-	instanceCreateInfo.engineName = "Eclipse Engine";
-	instanceCreateInfo.apiVersion = VK_API_VERSION_1_1;
-
-	// Create Instance
-	objects.instance = Core::CreateInstance(instanceCreateInfo);
-
-
-
+void Engine::run() {
+    initWindow();
+    initVulkan();
+    mainLoop();
+    cleanup();
 }
 
-void Engine::MainLoop() {
-	while (!glfwWindowShouldClose(gWindow))
-		glfwPollEvents();
+void Engine::initWindow() {
+    pWindow = Window::createWindow(800, 600, "Eclipse Engine Demo", false, false);
 }
 
-void Engine::Cleanup() {
-	Core::Cleanup(objects);
-	window.Cleanup();
-	Console::Info("Window Closed!");
+void Engine::initVulkan() {
+    core.setDebugMode(isDebug);
+    core.createInstance();
+    core.setupDebugMessenger();
+    core.pickPhysicalDevice();
 }
 
-void Engine::Run() {
-	InitWindow();
-	InitRenderer();
-	MainLoop();
-	Cleanup();
+void Engine::mainLoop() {
+    Window::mainLoop(pWindow);
+}
+
+void Engine::cleanup() {
+    core.cleanup();   
+    Window::destroyWindow(pWindow);
 }

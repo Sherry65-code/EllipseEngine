@@ -9,15 +9,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Vulkan REQUIRED)
 
 include_directories(third_party/glfw/include)
-include_directories(third_party/volk)
-include_directories(src)
+include_directories(third_party/fmt/include)
 include_directories(${VULKAN_INCLUDE_DIR})
 
 add_subdirectory(third_party/glfw)
-add_subdirectory(third_party/volk)
+add_subdirectory(third_party/fmt)
 
 link_libraries(Vulkan::Vulkan)
-link_libraries(volk::volk)
+link_libraries(fmt::fmt)
 link_libraries(glfw)
 
 file(GLOB_RECURSE SRC_FILES src/*)

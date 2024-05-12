@@ -1,33 +1,41 @@
 #include "Window.hpp"
 
-uint8_t Window::NewWindow(std::string title, uint32_t width, uint32_t height, bool isFullscreen, bool isResizable) {
-	if (!glfwInit())
-		return 1;
-	
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+GLFWwindow* Window::createWindow(int width, int height, const char* title, bool isResizable, bool isFullscreen) {
+    if (!glfwInit())
+        return nullptr;
 
-	if (isResizable)
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-	else
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    
+    if (!isResizable)
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	if (isFullscreen) {
-		GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
-		const GLFWvidmode* videoMode = glfwGetVideoMode(primaryMonitor);
-		gWindow = glfwCreateWindow(videoMode->width, videoMode->height, title.c_str(), primaryMonitor, nullptr);
-	}
-	else {
-		gWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-	}
+    if (isFullscreen) {
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+        return glfwCreateWindow(mode->width, mode->height, title, monitor, nullptr);
+    }
 
-	if (!gWindow)
-		return 2;
+    return glfwCreateWindow(width, height, title, nullptr, nullptr);
 
-	return 0;
 }
 
-void Window::Cleanup() {
-	if (gWindow != nullptr)
-		glfwDestroyWindow(gWindow);
-	glfwTerminate();
+void Window::mainLoop(GLFWwindow* window) {
+    while (!glfwWindowShouldClose(window))
+        glfwPollEvents();
+}
+
+void Window::getInstanceExtensions(uint32_t& extensionCount, const char**& extensions) {
+    uint32_t glfwExtensionCount = 0;
+    const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+    extensionCount = glfwExtensionCount;
+    extensions = glfwExtensions;
+}
+
+void Window::destroyWindow(GLFWwindow* window) {
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }

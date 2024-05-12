@@ -1,14 +1,9 @@
-#pragma once
-
-#include <iostream>
-
 #include <GLFW/glfw3.h>
 
 class Window {
-public:
-	typedef GLFWwindow* WINDOW;
-
-	WINDOW gWindow = nullptr;
-	uint8_t NewWindow(std::string title, uint32_t width, uint32_t height, bool isFullscreen, bool isResizable);
-	void Cleanup();
+    public:
+    static GLFWwindow* createWindow(int width, int height, const char* title, bool isResizable, bool isFullscreen);
+    static void destroyWindow(GLFWwindow* window);
+    static void mainLoop(GLFWwindow* window);
+    static void getInstanceExtensions(uint32_t& extensionCount, const char**& extensions);
 };

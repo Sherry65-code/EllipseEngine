@@ -1,40 +1,46 @@
 #pragma once
+
 #include <iostream>
 #include <vector>
 #include <string>
+#include <cstdint>
+#include <optional>
 
-#if !defined(NDEBUG)
-#define VK_NO_PROTOTYPES
-#endif
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#include <vulkan/vulkan.hpp>
-#if !defined(NDEBUG)
-#include <Volk/volk.h>
-#endif
-#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
 
 #include "Console.hpp"
+#include "Window.hpp"
 
 class Core {
-public:
-	typedef struct InstanceCreateInfo {
-		std::string applicationName;
-		std::string engineName;
-		uint32_t apiVersion;
-	} InstanceCreateInfo;
+    private:
+    const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+    bool isDebug = false;
+    VkInstance instance;
+    VkDebugUtilsMessengerEXT debugMessenger;
+    VkPhysicalDevice physicalDevice;
 
-	typedef VkInstance Instance;
+    struct QueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
 
-	typedef struct Objects {
-		Instance instance;
-	} Objects;
+        bool isComplete() {
+            return graphicsFamily.has_value();
+        }
+    };
 
-	static Instance CreateInstance(Core::InstanceCreateInfo createInfo);
-	static void EnableValidationLayers(Core::Instance instance);
+    bool checkValidationLayerSupport();
+    std::vector<const char*> getRequiredExtensions();
+    VkResult createDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+    void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+    void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+    uint32_t ratePhysicalDevice(VkPhysicalDevice device);
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
-	static void Cleanup(Objects objects);
+    public:
+    void setDebugMode(bool debugMode);
 
-private:
-	static bool ValidateExtensions(std::vector<const char*> active_extensions, std::vector<vk::ExtensionProperties> available_extensions);
-	static bool ValidateLayers(std::vector<const char*> active_layers, std::vector<vk::LayerProperties> available_layers);
+    void createInstance();
+    void setupDebugMessenger();
+    void pickPhysicalDevice();
+
+    void cleanup();
 };

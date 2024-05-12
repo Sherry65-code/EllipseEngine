@@ -1,11 +1,35 @@
 #pragma once
 
-#include <iostream>
+#include <fmt/color.h>
 
 class Console {
 public:
-	static void Info(std::string info);
-	static void Error(std::string error);
-	static void Warning(std::string warning);
-	static void Debug(std::string debug);
+    template<typename... Args>
+    static void PrintError(const std::string format, Args... args) {
+        fmt::print(fmt::fg(fmt::color::red), "ERROR: ");
+        fmt::print(fmt::runtime(format), args...);
+        fmt::print("\n");
+        exit(-1);
+    }
+
+    template<typename... Args>
+    static void PrintInfo(const std::string format, Args... args) {
+        fmt::print(fmt::fg(fmt::color::green), "INFO: ");
+        fmt::print(fmt::runtime(format), args...);
+        fmt::print("\n");
+    }
+
+    template<typename... Args>
+    static void PrintWarning(const std::string format, Args... args) {
+        fmt::print(fmt::fg(fmt::color::orange), "WARNING: ");
+        fmt::print(fmt::runtime(format), args...);
+        fmt::print("\n");
+    }
+
+    template<typename... Args>
+    static void PrintDebug(const std::string format, Args... args) {
+        fmt::print(fmt::fg(fmt::color::yellow), "DEBUG: ");
+        fmt::print(fmt::runtime(format), args...);
+        fmt::print("\n");
+    }
 };

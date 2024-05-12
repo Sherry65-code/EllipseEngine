@@ -1,110 +1,218 @@
 #include "VkCore.hpp"
 
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
-
-#if !defined(NDEBUG)
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data) {
-	Console::Debug(callback_data->pMessage);
-	return vk::False;
-}
-#endif
-
-const std::vector<const char*> required_validation_layers = {
-	"VK_LAYER_KHRONOS_validation"
-};
-
-Core::Instance Core::CreateInstance(InstanceCreateInfo createInfo) {
-	vk::Instance instance;
-
-	static vk::DynamicLoader dl;
-	PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
-
-	std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
-
-	std::vector<const char*> active_instance_extensions;
-
-	uint32_t glfwExtensionCount = 0;
-	const char** glfwExtensions;
-
-	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-	for (uint32_t i = 0; i < glfwExtensionCount; i++)
-		active_instance_extensions.push_back(glfwExtensions[i]);
-
-#if !defined(NDEBUG)
-	active_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-#endif
-
-	if (!ValidateExtensions(active_instance_extensions, available_instance_extensions))
-		Console::Error("Required Extension Not Found!");
-
-	std::vector<vk::LayerProperties> supported_validation_layers = vk::enumerateInstanceLayerProperties();
-	std::vector<const char*> requested_validation_layers(required_validation_layers);
-
-	if (!ValidateLayers(requested_validation_layers, supported_validation_layers))
-		Console::Error("Required Layers Not Found!");
-
-	vk::ApplicationInfo app(createInfo.applicationName.c_str(), {}, createInfo.engineName.c_str(), {}, createInfo.apiVersion);
-
-	vk::InstanceCreateInfo instance_info({}, &app, requested_validation_layers, active_instance_extensions);
-
-	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
-
-#if !defined(NDEBUG)
-	debug_utils_create_info =
-		vk::DebugUtilsMessengerCreateInfoEXT({},
-			vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-			vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-			debug_utils_messenger_callback);
-
-	instance_info.pNext = &debug_utils_create_info;
-#endif
-
-#if (defined(VKB_ENABLE_PORTABILITY))
-	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
-#endif
-
-#if defined(VK_USE_PLATFORM_DISPLAY_KHR)
-	if (volkInitialize())
-	{
-		Console::Error("Failed to Initialize Vulkan Dynamic Loader!");
-	}
-	volkLoadInstance(instance);
-#endif
-
-	return instance;
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+    Console::PrintDebug("{}", pCallbackData->pMessage);
+    return VK_FALSE;
 }
 
-void Core::EnableValidationLayers(Core::Instance instance) {
+VkResult Core::createDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+    } else {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
 }
 
-void Core::Cleanup(Core::Objects objects) {
-
+void Core::destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        func(instance, debugMessenger, pAllocator);
+    }
 }
 
-bool Core::ValidateExtensions(std::vector<const char*> active_extensions, std::vector<vk::ExtensionProperties> available_extensions) {
-	for (uint32_t i = 0; i < active_extensions.size(); i++) {
-		bool isFound = false;
-		for (uint32_t j = 0; j < available_extensions.size(); j++) {
-			if (strcmp(active_extensions[i], available_extensions[j].extensionName) == 0)
-				isFound = true;
-		}
-		if (!isFound)
-			return false;
-	}
-	return true;
+void Core::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+    createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    createInfo.pfnUserCallback = debugCallback;
 }
 
-bool Core::ValidateLayers(std::vector<const char*> active_layers, std::vector<vk::LayerProperties> available_layers) {
-	for (uint32_t i = 0; i < active_layers.size(); i++) {
-		bool isFound = false;
-		for (uint32_t j = 0; j < available_layers.size(); j++) {
-			if (strcmp(active_layers[i], available_layers[j].layerName) == 0)
-				isFound = true;
-		}
-		if (!isFound)
-			return false;
-	}
-	return true;
+uint32_t Core::ratePhysicalDevice(VkPhysicalDevice device) {
+    QueueFamilyIndices indices = findQueueFamilies(device);
+
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties(device, &properties);
+
+    VkPhysicalDeviceFeatures features;
+    vkGetPhysicalDeviceFeatures(device, &features);
+
+    uint32_t score = 0;
+
+    score += properties.limits.maxImageDimension2D;
+    if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) score += 1000;
+    if (!features.geometryShader) return 0;
+
+    if (!indices.isComplete()) return 0;
+
+    if (isDebug)
+        Console::PrintInfo("GPU -> {}, Score: {}", properties.deviceName, score);
+
+    return score;
+}
+
+Core::QueueFamilyIndices Core::findQueueFamilies(VkPhysicalDevice device) {
+    QueueFamilyIndices indices;
+
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+    std::vector<VkQueueFamilyProperties> queueFamiles(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamiles.data());
+
+    uint32_t i = 0;
+    for (const VkQueueFamilyProperties queueFamily : queueFamiles) {
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            indices.graphicsFamily = i;
+        }
+
+        if (indices.isComplete()) break;
+
+        i++;
+    }
+
+    return indices;
+}
+
+void Core::setDebugMode(bool debugMode) {
+    isDebug = debugMode;
+}
+
+void Core::createInstance() {
+
+    if (isDebug && !checkValidationLayerSupport())
+        Console::PrintError("Validation layers requested, but not available");
+
+    VkApplicationInfo appInfo{};
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName = "Eclipse Engine";
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "Eclipse Engine";
+    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion = VK_API_VERSION_1_0;
+
+    VkInstanceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo = &appInfo;
+
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+
+    auto extensions = getRequiredExtensions();
+
+    if (isDebug) { 
+        Console::PrintInfo("Extensions Required:");
+        for (uint32_t i = 0; i < extensions.size(); i++)
+            Console::PrintInfo("\t{}", extensions[i]);
+    }
+
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo.ppEnabledExtensionNames = extensions.data();
+
+    if (isDebug) {
+        Console::PrintInfo("Enabling Validation Layers!");
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.ppEnabledLayerNames = validationLayers.data();
+
+        populateDebugMessengerCreateInfo(debugCreateInfo);
+        createInfo.pNext = &debugCreateInfo;
+    } else {
+        createInfo.enabledLayerCount = 0;
+        createInfo.pNext = nullptr;
+    }
+
+    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
+        Console::PrintError("Failed to create instance!");
+}
+
+void Core::setupDebugMessenger() {
+    if (!isDebug) return;
+    
+    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+    populateDebugMessengerCreateInfo(createInfo);
+
+    if (createDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+        Console::PrintError("Failed to set up debug messenger!");
+}
+
+void Core::pickPhysicalDevice() {
+    uint32_t deviceCount;
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+    if (deviceCount == 0)
+        Console::PrintError("Failed to find vulkan compatible GPU!");
+
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+    uint32_t max = 0;
+
+    for (const VkPhysicalDevice device : devices) {
+        if (ratePhysicalDevice(device) > max) {
+            max = ratePhysicalDevice(device);
+            physicalDevice = device;
+
+            if (ratePhysicalDevice(device) == 0) {
+                VkPhysicalDeviceProperties properties;
+                vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+                Console::PrintWarning("GPU {} is not Vulkan Compatible!", properties.deviceName);
+            }
+        }
+    }
+
+    if (isDebug) {
+        VkPhysicalDeviceProperties properties;
+        vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+        Console::PrintInfo("Picked GPU: {}", properties.deviceName);
+    }
+}
+
+void Core::cleanup() {
+    if (isDebug) {
+        Console::PrintInfo("Destroying Debugger!");
+        destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+    }
+
+    if (isDebug) Console::PrintInfo("Destroying instance!");
+    vkDestroyInstance(instance, nullptr);
+}
+
+bool Core::checkValidationLayerSupport() {
+    uint32_t layerCount;
+    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+    std::vector<VkLayerProperties> availableLayers(layerCount);
+    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+    for (const char* layerName : validationLayers) {
+        bool layerFound = false;
+
+        for (const auto& layerProperties : availableLayers) {
+            if (strcmp(layerName, layerProperties.layerName) == 0) {
+                layerFound = true;
+                break;
+            }
+        }
+
+        if (!layerFound)
+            return false;
+    }
+
+    return true;
+}
+
+std::vector<const char*> Core::getRequiredExtensions() {
+    uint32_t glfwExtensionCount;
+    const char** glfwExtensions;
+
+    Window::getInstanceExtensions(glfwExtensionCount, glfwExtensions);
+
+    std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+    if (isDebug)
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+    return extensions;
 }
