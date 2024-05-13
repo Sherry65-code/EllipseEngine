@@ -12,6 +12,7 @@
 
 #include "Console.hpp"
 #include "Window.hpp"
+#include "IO.hpp"
 
 class Core {
     private:
@@ -33,6 +34,7 @@ class Core {
     VkQueue presentQueue;
     VkSurfaceKHR surface;
     VkSwapchainKHR swapChain;
+    VkPipelineLayout pipelineLayout;
 
 
     struct QueueFamilyIndices {
@@ -63,6 +65,7 @@ class Core {
     VkSurfaceFormatKHR choooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+    VkShaderModule createShaderModule(const std::vector<char>& code);
 
     public:
     void setDebugMode(bool debugMode);
