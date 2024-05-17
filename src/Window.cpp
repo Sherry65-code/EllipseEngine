@@ -23,11 +23,6 @@ GLFWwindow* Window::createWindow(int width, int height, const char* title, bool 
 
 }
 
-void Window::mainLoop(GLFWwindow* window) {
-    while (!glfwWindowShouldClose(window))
-        glfwPollEvents();
-}
-
 void Window::getInstanceExtensions(uint32_t& extensionCount, const char**& extensions) {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);

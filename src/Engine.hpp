@@ -9,7 +9,7 @@ class Engine {
     GLFWwindow* pWindow;
 
     void initWindow();
-    void initVulkan();
+    void initVulkan() const;
     void mainLoop();
     void cleanup();
 };

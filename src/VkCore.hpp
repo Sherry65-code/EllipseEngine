@@ -21,6 +21,7 @@ class Core {
 
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
+    std::vector<VkFramebuffer> swapChainFramebuffers;
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
 
@@ -35,13 +36,19 @@ class Core {
     VkSurfaceKHR surface;
     VkSwapchainKHR swapChain;
     VkPipelineLayout pipelineLayout;
-
+    VkRenderPass renderPass;
+    VkPipeline graphicsPipeline;
+    VkCommandPool commandPool;
+    VkCommandBuffer commandBuffer;
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
+    VkFence inFlightFence;
 
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
 
-        bool isComplete() {
+        bool isComplete() const {
             return graphicsFamily.has_value() && presentFamily.has_value();
         }
     };
@@ -66,10 +73,12 @@ class Core {
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     VkShaderModule createShaderModule(const std::vector<char>& code);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
     public:
     void setDebugMode(bool debugMode);
     void setWindowPointer(GLFWwindow* window);
+    void deviceWaitIdle();
 
     void createInstance();
     void setupDebugMessenger();
@@ -78,7 +87,13 @@ class Core {
     void createLogicalDevice();
     void createSwapChain();
     void createImageViews();
+    void createRenderPass();
     void createGraphicsPipeline();
+    void createFramebuffers();
+    void createCommandPool();
+    void createCommandBuffer();
+    void drawFrame();
+    void createSyncObjects();
 
     void cleanup();
 };

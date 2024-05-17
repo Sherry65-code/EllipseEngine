@@ -19,7 +19,7 @@ void Engine::initWindow() {
     pWindow = Window::createWindow(800, 600, "Eclipse Engine Demo", false, false);
 }
 
-void Engine::initVulkan() {
+void Engine::initVulkan() const {
     core.setDebugMode(isDebug);
     core.setWindowPointer(pWindow);
     core.createInstance();
@@ -29,11 +29,21 @@ void Engine::initVulkan() {
     core.createLogicalDevice();
     core.createSwapChain();
     core.createImageViews();
+    core.createRenderPass();
     core.createGraphicsPipeline();
+    core.createFramebuffers();
+    core.createCommandPool();
+    core.createCommandBuffer();
+    core.createSyncObjects();
 }
 
 void Engine::mainLoop() {
-    Window::mainLoop(pWindow);
+    while (!glfwWindowShouldClose(pWindow)) {
+        glfwPollEvents();
+        core.drawFrame();
+    }
+
+    core.deviceWaitIdle();
 }
 
 void Engine::cleanup() {
