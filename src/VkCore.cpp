@@ -276,6 +276,38 @@ void Core::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageInde
         Console::PrintError("Failed to record command buffer!");
 }
 
+void Core::cleanupSwapChain() {
+    for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
+        vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
+    }
+
+    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+        vkDestroyImageView(device, swapChainImageViews[i], nullptr);
+    }
+
+    vkDestroySwapchainKHR(device, swapChain, nullptr);
+}
+
+void Core::recreateSwapChain() {
+    if (isDebug) Console::PrintInfo("Swapchain recreation requested!");
+
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(pWindow, &width, &height);
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(pWindow, &width, &height);
+        glfwWaitEvents();
+        Console::PrintInfo("Frame Waiting Idle!");
+    }
+
+    vkDeviceWaitIdle(device);
+
+    cleanupSwapChain();
+
+    createSwapChain();
+    createImageViews();
+    createFramebuffers();
+}
+
 void Core::deviceWaitIdle() {
     vkDeviceWaitIdle(device);
 }
@@ -753,7 +785,15 @@ void Core::drawFrame() {
     vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        recreateSwapChain();
+        return;
+    }
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        Console::PrintError("Failed to aquire swap chain image!");
+    }
 
     // Reset command buffer so that we can record
     vkResetCommandBuffer(commandBuffers[currentFrame], 0);
@@ -762,7 +802,7 @@ void Core::drawFrame() {
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame]};
+    VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
@@ -770,13 +810,13 @@ void Core::drawFrame() {
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
 
-    VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame]};
+    VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
     if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
         Console::PrintError("Failed to submit draw command to GPU!");
-    
+
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
@@ -788,14 +828,22 @@ void Core::drawFrame() {
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr;
 
-    vkQueuePresentKHR(presentQueue, &presentInfo);
+    result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+        recreateSwapChain();
+        framebufferResized = false;
+    }
+    else if (result != VK_SUCCESS)
+        Console::PrintError("Failed to present swap chain image!");
 
     // increase frame and if its more that MAX_FRAMES_IN_FLIGHT then go to 0 back
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-
 void Core::cleanup() {
+    if (isDebug) Console::PrintInfo("Destroying swap chain!");
+    cleanupSwapChain();
 
     if (isDebug) Console::PrintInfo("Destroying Command Pool!");
     vkDestroyCommandPool(device, commandPool, nullptr);
@@ -807,11 +855,6 @@ void Core::cleanup() {
         vkDestroyFence(device, inFlightFences[i], nullptr);
     }
 
-    if (isDebug) Console::PrintInfo("Destroying Framebuffer!");
-    for (auto framebuffer : swapChainFramebuffers) {
-        vkDestroyFramebuffer(device, framebuffer, nullptr);
-    }
-
     if (isDebug) Console::PrintInfo("Destroying Graphics Pipeline!");
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
 
@@ -820,14 +863,6 @@ void Core::cleanup() {
 
     if (isDebug) Console::PrintInfo("Destroying Render Pass!");
     vkDestroyRenderPass(device, renderPass, nullptr);
-
-    if (isDebug) Console::PrintInfo("Destroying image views!");
-    for (auto imageView : swapChainImageViews) {
-        vkDestroyImageView(device, imageView, nullptr);
-    }
-
-    if (isDebug) Console::PrintInfo("Destroying swap chain!");
-    vkDestroySwapchainKHR(device, swapChain, nullptr);
 
     if (isDebug) Console::PrintInfo("Destroying logical device!");
     vkDestroyDevice(device, nullptr);

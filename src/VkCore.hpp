@@ -7,6 +7,7 @@
 #include <optional>
 #include <set>
 #include <algorithm>
+#include <chrono>
 
 #include <vulkan/vulkan.h>
 
@@ -76,8 +77,12 @@ class Core {
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     VkShaderModule createShaderModule(const std::vector<char>& code);
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void recreateSwapChain();
+    void cleanupSwapChain();
 
     public:
+    bool framebufferResized = false;
+
     void setDebugMode(bool debugMode);
     void setWindowPointer(GLFWwindow* window);
     void deviceWaitIdle();

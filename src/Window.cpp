@@ -1,6 +1,6 @@
 #include "Window.hpp"
 
-GLFWwindow* Window::createWindow(int width, int height, const char* title, bool isResizable, bool isFullscreen) {
+Window::WINDOW Window::createWindow(int width, int height, const char* title, bool isResizable, bool isFullscreen) {
     if (!glfwInit())
         return nullptr;
 
@@ -19,8 +19,17 @@ GLFWwindow* Window::createWindow(int width, int height, const char* title, bool 
         return glfwCreateWindow(mode->width, mode->height, title, monitor, nullptr);
     }
 
-    return glfwCreateWindow(width, height, title, nullptr, nullptr);
+    pWindow = glfwCreateWindow(width, height, title, nullptr, nullptr);
+    
+    return pWindow;
+}
 
+bool Window::shouldWindowClose() {
+    return glfwWindowShouldClose(pWindow);
+}
+
+void Window::pollEvents() {
+    glfwPollEvents();
 }
 
 void Window::getInstanceExtensions(uint32_t& extensionCount, const char**& extensions) {
@@ -30,7 +39,7 @@ void Window::getInstanceExtensions(uint32_t& extensionCount, const char**& exten
     extensions = glfwExtensions;
 }
 
-void Window::destroyWindow(GLFWwindow* window) {
-    glfwDestroyWindow(window);
+void Window::destroyWindow() {
+    glfwDestroyWindow(pWindow);
     glfwTerminate();
 }

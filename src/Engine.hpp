@@ -6,7 +6,7 @@ class Engine {
     void run();
 
     private:
-    GLFWwindow* pWindow;
+    Window::WINDOW pWindow;
 
     void initWindow();
     void initVulkan() const;

@@ -3,6 +3,11 @@
 bool isDebug = false;
 
 Core core;
+Window window;
+
+static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+    core.framebufferResized = true;
+}
 
 void Engine::setDebugMode(bool debugMode) {
     isDebug = debugMode;
@@ -16,7 +21,8 @@ void Engine::run() {
 }
 
 void Engine::initWindow() {
-    pWindow = Window::createWindow(800, 600, "Eclipse Engine Demo", false, false);
+    pWindow = window.createWindow(800, 600, "Eclipse Engine Demo", true, false);
+    glfwSetFramebufferSizeCallback(pWindow, framebufferResizeCallback);
 }
 
 void Engine::initVulkan() const {
@@ -38,8 +44,8 @@ void Engine::initVulkan() const {
 }
 
 void Engine::mainLoop() {
-    while (!glfwWindowShouldClose(pWindow)) {
-        glfwPollEvents();
+    while (!window.shouldWindowClose()) {
+        window.pollEvents();
         core.drawFrame();
     }
 
@@ -48,5 +54,5 @@ void Engine::mainLoop() {
 
 void Engine::cleanup() {
     core.cleanup();   
-    Window::destroyWindow(pWindow);
+    window.destroyWindow();
 }
