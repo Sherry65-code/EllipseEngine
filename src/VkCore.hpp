@@ -22,10 +22,14 @@ class Core {
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkFramebuffer> swapChainFramebuffers;
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
+    std::vector<VkCommandBuffer> commandBuffers;
+    std::vector<VkSemaphore> imageAvailableSemaphores;
+    std::vector<VkSemaphore> renderFinishedSemaphores;
+    std::vector<VkFence> inFlightFences;
 
     bool isDebug = false;
+    const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+    uint32_t currentFrame = 0;
     GLFWwindow* pWindow;
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
@@ -39,10 +43,8 @@ class Core {
     VkRenderPass renderPass;
     VkPipeline graphicsPipeline;
     VkCommandPool commandPool;
-    VkCommandBuffer commandBuffer;
-    VkSemaphore imageAvailableSemaphore;
-    VkSemaphore renderFinishedSemaphore;
-    VkFence inFlightFence;
+    VkFormat swapChainImageFormat;
+    VkExtent2D swapChainExtent;
 
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
@@ -53,11 +55,11 @@ class Core {
         }
     };
 
-    struct SwapChainSupportDetails {
+    typedef struct SwapChainSupportDetails {
         VkSurfaceCapabilitiesKHR capabilities;
         std::vector<VkSurfaceFormatKHR> formats;
         std::vector<VkPresentModeKHR> presentModes;
-    };  
+    } SwapChainSupportDetails;
     
 
     bool checkValidationLayerSupport();
