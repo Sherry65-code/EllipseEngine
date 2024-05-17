@@ -39,6 +39,7 @@ void Engine::initVulkan() const {
     core.createGraphicsPipeline();
     core.createFramebuffers();
     core.createCommandPool();
+    core.createVertexBuffer();
     core.createCommandBuffer();
     core.createSyncObjects();
 }

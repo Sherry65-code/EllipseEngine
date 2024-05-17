@@ -8,8 +8,10 @@
 #include <set>
 #include <algorithm>
 #include <chrono>
+#include <array>
 
 #include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
 
 #include "Console.hpp"
 #include "Window.hpp"
@@ -46,22 +48,23 @@ class Core {
     VkCommandPool commandPool;
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
 
-    struct QueueFamilyIndices {
+    typedef struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
 
         bool isComplete() const {
             return graphicsFamily.has_value() && presentFamily.has_value();
         }
-    };
+    } QueueFamilyIndices;
 
-    typedef struct SwapChainSupportDetails {
+    struct SwapChainSupportDetails {
         VkSurfaceCapabilitiesKHR capabilities;
         std::vector<VkSurfaceFormatKHR> formats;
         std::vector<VkPresentModeKHR> presentModes;
-    } SwapChainSupportDetails;
-    
+    };
 
     bool checkValidationLayerSupport();
     std::vector<const char*> getRequiredExtensions();
@@ -79,8 +82,42 @@ class Core {
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void recreateSwapChain();
     void cleanupSwapChain();
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
     public:
+
+    struct Vertex {
+        glm::vec2 pos;
+        glm::vec3 color;
+
+        static VkVertexInputBindingDescription getBindingDescription() {
+            VkVertexInputBindingDescription bindingDescription{};
+            bindingDescription.binding = 0;
+            bindingDescription.stride = sizeof(Vertex);
+            bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+            return bindingDescription;
+        }
+
+        static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+            std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+
+            // For Position
+            attributeDescriptions[0].binding = 0;
+            attributeDescriptions[0].location = 0;
+            attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT; // 32-bit floats
+            attributeDescriptions[0].offset = offsetof(Vertex, pos);
+            
+            // For Textures
+            attributeDescriptions[1].binding = 0;
+            attributeDescriptions[1].location = 1;
+            attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT; // 32-bit floats
+            attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+            return attributeDescriptions;
+        }
+    };
+
     bool framebufferResized = false;
 
     void setDebugMode(bool debugMode);
@@ -98,6 +135,7 @@ class Core {
     void createGraphicsPipeline();
     void createFramebuffers();
     void createCommandPool();
+    void createVertexBuffer();
     void createCommandBuffer();
     void drawFrame();
     void createSyncObjects();

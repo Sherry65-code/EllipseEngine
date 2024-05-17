@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Vulkan REQUIRED)
 
+include_directories(third_party)
 include_directories(third_party/glfw/include)
 include_directories(third_party/fmt/include)
 include_directories(${VULKAN_INCLUDE_DIR})
