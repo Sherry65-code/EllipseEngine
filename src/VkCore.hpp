@@ -50,6 +50,8 @@ class Core {
     VkExtent2D swapChainExtent;
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
 
     typedef struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
@@ -138,6 +140,7 @@ class Core {
     void createFramebuffers();
     void createCommandPool();
     void createVertexBuffer();
+    void createIndexBuffer();
     void createCommandBuffer();
     void drawFrame();
     void createSyncObjects();
