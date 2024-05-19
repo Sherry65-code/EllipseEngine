@@ -36,11 +36,15 @@ void Engine::initVulkan() const {
     core.createSwapChain();
     core.createImageViews();
     core.createRenderPass();
+    core.createDescriptorSetLayout();
     core.createGraphicsPipeline();
     core.createFramebuffers();
     core.createCommandPool();
     core.createVertexBuffer();
     core.createIndexBuffer();
+    core.createUniformBuffers();
+    core.createDescriptorPool();
+    core.createDescriptorSets();
     core.createCommandBuffer();
     core.createSyncObjects();
 }
