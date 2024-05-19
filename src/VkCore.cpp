@@ -241,6 +241,15 @@ VkShaderModule Core::createShaderModule(const std::vector<char>& code) {
     return shaderModule;
 }
 
+void Core::setRasterizerMode(RasterizerMode mode) {
+    rasterizerMode = mode;
+    deviceWaitIdle();
+    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+    createGraphicsPipeline();
+    recreateSwapChain();
+}
+
 void Core::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
     VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
     
@@ -758,11 +767,13 @@ void Core::createGraphicsPipeline() {
     viewportState.scissorCount = 1;
     viewportState.pScissors = &scissor;
 
+    std::array<VkPolygonMode, 3> polygon_mode = { VK_POLYGON_MODE_FILL, VK_POLYGON_MODE_LINE , VK_POLYGON_MODE_POINT};
+
     VkPipelineRasterizationStateCreateInfo rasterizer{};
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL; // Sets to different polygon modes like wireframe, fill, etc
+    rasterizer.polygonMode = polygon_mode[rasterizerMode]; // Sets to different polygon modes like wireframe, fill, etc
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;

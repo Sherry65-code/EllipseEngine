@@ -9,6 +9,25 @@ static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
     core.framebufferResized = true;
 }
 
+static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action == GLFW_PRESS) {
+        switch (key) {
+        case GLFW_KEY_F1:
+            Console::PrintInfo("Switching to Wireframe Mode!");
+            core.setRasterizerMode(Core::WIREFRAME);
+            break;
+        case GLFW_KEY_F2:
+            Console::PrintInfo("Switching to Rasterized Mode!");
+            core.setRasterizerMode(Core::FILL);
+            break;
+        case GLFW_KEY_F3:
+            Console::PrintInfo("Switching to Point Mode!");
+            core.setRasterizerMode(Core::POINT);
+            break;
+        };
+    }
+}
+
 void Engine::setDebugMode(bool debugMode) {
     isDebug = debugMode;
 }
@@ -23,6 +42,7 @@ void Engine::run() {
 void Engine::initWindow() {
     pWindow = window.createWindow(800, 600, "Eclipse Engine Demo", true, false);
     glfwSetFramebufferSizeCallback(pWindow, framebufferResizeCallback);
+    glfwSetKeyCallback(pWindow, keyCallback);
 }
 
 void Engine::initVulkan() const {
